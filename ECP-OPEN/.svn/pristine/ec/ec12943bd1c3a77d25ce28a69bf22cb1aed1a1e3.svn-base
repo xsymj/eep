@@ -1,0 +1,168 @@
+<#include "../../inc/layout.html">
+<@layout title="出库入库" js="scm/storageBill/view.js">
+<style>
+body{background: #fff;}
+.table1 td{padding:2px;}
+.form_title{padding:0px 20px;text-align:center;padding-bottom:30px;}
+.form_title img{width:80px;float:left;}
+.form_title p{font-size:20px;padding-top:10px;padding-right:40px;font-weight:bold;}
+.form_title span{float:right;}
+.table1 td{border:1px solid #333;}
+.table2 th,.table2 td{height:24px;border:1px solid #333;}
+.productTr th,.productTr td{text-align:center;}
+.footerwords p{padding-right:15%;float:left; padding-top:20px;}
+</style>
+<div class="manage-wrapper" ms-controller="ctrl">
+<div ms-if="nprint" class="fr">
+	<a class="ui-btn mrb" ms-click="printRpt" title="打印"><i class="fa fa-print"></i></a>
+</div>
+    <div class="manage-wrap">
+	    <div class="form_title">
+	   		<img src="../../assets/img/logoTal.jpg">
+	   		<p>毫米装饰{{billType[data.type]}}单</p>
+	   		<span>订单编号：{{data.billsn}}</span>
+	   	</div>
+    				<table style="width:100%;" class="table1">
+    				<tr ms-if="buyOrder||returnOrder">
+   					<td align="left" width="33%"><span>供货供应商</span><font color="red">*</font>：{{data.customer_name}}</td>
+   					<td width="33%" align="left">入库日期：{{data.bill_date}}</td>
+   					<td width="33%;" align="left" ms-if="buyOrder">入库单号：{{data.billsn}}</td>
+   					<td width="33%;" align="left" ms-if="returnOrder">退货单号：{{data.billsn}}</td>
+   					</tr>
+    				</table>
+    				
+    				<table style="width:100%;" class="table1" ms-if="meterialOrder||transfersOrder||receiveOrder||saleOrder||salereturnOrder">
+    				<tr>
+    					<td align="left" colspan="2" ms-if="meterialOrder||receiveOrder||saleOrder||salereturnOrder">
+    						<span>合同号</span>：
+    						<span>111111</span>
+    					</td>
+    					<td align="left" colspan="2" ms-if="transfersOrder">
+    						<span>调拨部门</span>：
+    						<span>111111</span>
+    					</td>
+    					<td align="left" colspan="2">
+    						<span>收货联系人：</span> 
+    						<span>{{data.head_name}}</span>
+    					</td>
+    					<td align="left" colspan="2">
+    						<span>联系电话：</span>
+    						<span>111111</span>
+    					</td>
+    					<td align="left" colspan="2">
+    						<span ms-if="meterialOrder">退料单号：</span>
+    						<span ms-if="receiveOrder||saleOrder||salereturnOrder">出库单号：</span>
+    						<span ms-if="transfersOrder">调拨单号：</span>
+    						<span>{{data.billsn}}</span>
+    					</td>
+    				</tr>
+    				<tr>
+    					<td align="left" colspan="2">
+    						<span>负责人：</span>
+    						<span>{{data.customer_name}}</span>
+    					</td>
+    					<td align="left" colspan="2">                                                                                           
+    						<span>地址：</span>
+    						<span>111111</span>
+    					</td>
+    					<td align="left" colspan="2">                                                                                           
+    						<span></span>
+    						<span></span>
+    					</td>
+    					<td align="left" colspan="2">                                                                                           
+    						<span ms-if="meterialOrder||salereturnOrder||saleOrder">退料日期：</span>
+    						<span ms-if="transfersOrder||receiveOrder">送货日期：</span>
+    						<span>{{data.create_datetime}}</span>
+    					</td>
+    				</tr>
+    				</table>
+    		</ul>
+    		<br>
+    		
+    		
+    		<table class="table-hover table-striped table_thead_fixed table-condensed table_buy table2" id="prodcutTable" ms-if="buyOrder||returnOrder||meterialOrder||transfersOrder||receiveOrder">
+  				<thead>
+  					<tr class="productTr">
+  						<th width="50px">序号</th>
+  						<th width="167px">商品编码</th>
+  						<th width="167px">商品名称</th>
+  						<th width="167px">品牌</th>
+  						<th width="167px">型号</th>
+  						<th width="167px">规格</th>
+  						<th width="167px">计量单位</th>
+  						<th width="167px">数量</th>
+  						<th width="167px" ms-if="buyOrder">入仓区域</th>
+  						<th width="167px">备注</th>
+  					</tr>
+  				</thead>
+  				<tbody style="max-height:400px;">
+  					<tr ms-repeat="data.productlist" class="productTr">
+  						<td width="50px">{{$index+1}}</td>
+  						<td>{{el.billsn}}</td>
+  						<td>{{el.product_name}}{{el.product_name}}</td>
+  						<td>{{el.brand}}</td>
+  						<td>{{el.model}}</td>
+  						<td>{{el.spec}}</td>
+	          			<td>{{el.unit|custParame}}</td>
+  						<td>{{el.amount}}</td>
+  						<td ms-if="buyOrder">{{el.packformat}}</td>
+  						<td>{{el.description}}</td>
+  					</tr>
+  				</tbody>
+  				<tfoot>
+  					<tr>
+  						<td ms-attr-colspan="type==4?6:5" align="center" colspan="6"><b>数量合计：</b></td>
+  						<td colspan='8' align="center">{{totalAmount}}</td>
+  					</tr>
+  				</tfoot>
+    		</table>
+    		
+    	<table class="table-hover table-striped table_thead_fixed table-condensed table_buy table2" id="prodcutTable" ms-if="saleOrder||salereturnOrder">
+  				<thead>
+  					<tr class="productTr">
+  						<th width="50px">序号</th>
+  						<th width="167px">编码</th>
+  						<th width="167px">名称</th>
+  						<th width="167px">品牌</th>
+  						<th width="167px">型号</th>
+  						<th width="167px">规格</th>
+  						<th width="167px">单位</th>
+  						<th width="167px">数量</th>
+  						<th width="167px">金额</th>
+  						<th width="167px">包装规格</th>
+  						<th width="167px">备注</th>
+  					</tr>
+  				</thead>
+  				<tbody style="max-height:400px;">
+  					<tr ms-repeat="data.productlist" class="productTr">
+  						<td width="50px">{{$index+1}}</td>
+  						<td>{{el.billsn}}</td>
+  						<td>{{el.product_name}}</td>
+  						<td>{{el.brand}}</td>
+  						<td>{{el.model}}</td>
+  						<td>{{el.spec}}</td>
+	          			<td>{{el.unit|custParame}}</td><!-- 单位 -->
+  						<td>{{el.amount}}</td>
+  						<td>{{el.amt|money}}</td>
+  						<td>{{el.packformat}}</td>
+  						<td>{{el.description}}</td>
+  					</tr>
+  				</tbody>
+  				<tfoot>
+  					<tr>
+  						<td ms-attr-colspan="type==4?6:5" align="left" colspan="6"><b>合计：</b></td>
+  						<td colspan='8' align="center">{{fixedNum(sumAmt)}}</td>
+  					</tr>
+  				</tfoot>
+    		</table>
+    		
+    		<div id="amountArea" class="footerwords" ms-if="buyOrder||returnOrder||meterialOrder||transfersOrder||receiveOrder">
+    		<p>制单：</p>
+    		<p>出库：</p>
+    		<p>送货人：</p>
+    		<p>审核：</p>
+    		<p>收货人：</p>
+       </div>
+    </div>
+</div>
+</@layout>

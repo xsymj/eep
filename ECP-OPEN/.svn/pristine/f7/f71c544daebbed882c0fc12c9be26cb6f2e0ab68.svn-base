@@ -1,0 +1,193 @@
+package net.loyin.model.scm;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import net.loyin.ctrl.BaseController;
+import net.loyin.jfinal.anatation.TableBind;
+import net.loyin.jfinal.model.IdGenerater;
+import net.loyin.model.crm.Contacts;
+import net.loyin.model.crm.Customer;
+import net.loyin.model.sso.Parame;
+import net.loyin.model.sso.Person;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.jfinal.aop.Before;
+import com.jfinal.plugin.activerecord.Db;
+import com.jfinal.plugin.activerecord.Model;
+import com.jfinal.plugin.activerecord.Page;
+import com.jfinal.plugin.activerecord.Record;
+import com.jfinal.plugin.activerecord.tx.Tx;
+/**
+ * 产品
+ * @author 龙影
+ */
+@TableBind(name="scm_product")
+public class Product extends Model<Product> {
+	private static final long serialVersionUID = -5465375747846490039L;
+	public static final String tableName="scm_product";
+	public static Product dao=new Product();
+	/**
+	 * 分页查询
+	 * @param pageNo
+	 * @param pageSize
+	 * @param filter 参数
+	 * @return
+	 */
+	public Page<Product> pageGrid(Integer pageNo,Integer pageSize,Map<String,Object> filter){
+		List<Object> parame=new ArrayList<Object>();
+		StringBuffer sql=new StringBuffer(" from ");
+		sql.append(tableName);
+		sql.append(" t left join "+Parame.tableName );
+		sql.append(" p on t.category=p.id where t.company_id=?  " );
+		parame.add(filter.get("company_id"));
+		String keyword=(String)filter.get("keyword");
+		if(StringUtils.isNotEmpty(keyword)){
+			sql.append(" and (t.billsn like ? or t.name like ?)");
+			keyword="%"+keyword+"%";
+			parame.add(keyword);
+			parame.add(keyword);
+		}
+		String category=(String)filter.get("category");
+		if(StringUtils.isNotEmpty(category)){
+			sql.append(" and t.category=? or p.parent_id=?  ");
+			parame.add(category);
+			parame.add(category);
+		}
+		String sortField=(String)filter.get("_sortField");
+		if(StringUtils.isNotEmpty(sortField)){
+			sql.append(" order by ");
+			sql.append(sortField);
+			sql.append(" ");
+			sql.append((String)filter.get("_sort"));
+		}
+		return dao.paginate(pageNo,pageSize,"select t.id,t.id product_id,t.name,t.name product_name,t.unit,t.stock_warn,t.billsn,t.status,t.model,t.sale_price,t.purchase_price,t.category,t.category_m,t.brand,t.spec,t.weight,t.moq,t.cycle,t.expired,t.expiredremind,t.packunit,t.packformat,t.lwh,t.sellpoint,t.imgurl",
+				sql.toString(), parame.toArray());
+	}
+	
+	public List list(Map<String,Object> filter){
+		String company_id = (String) filter.get("company_id");
+		return dao.find(" select t.id,t.id product_id,t.name,t.name product_name,t.unit,t.stock_warn,t.billsn,t.status,t.model,t.sale_price,t.purchase_price,t.category,t.brand,t.spec,t.weight,t.moq,t.cycle,t.expired,t.expiredremind,t.packunit,t.packformat,t.lwh,t.sellpoint,t.imgurl from scm_product t left join sso_parame p on t.category=p.id where t.company_id=? ", company_id);
+	}
+	@Before(Tx.class)
+	public void del(String id,String company_id){
+		if (StringUtils.isNotEmpty(id)) {
+			String[] ids=id.split(",");
+			StringBuffer ids_=new StringBuffer();
+			List<String> parame=new ArrayList<String>();
+			for(String id_:ids){
+				ids_.append("?,");
+				parame.add(id_);
+			}
+			ids_.append("'-'");
+			parame.add(company_id);
+			Db.update("delete  from " + tableName + " where id in ("+ ids_.toString()+ ") and company_id=? ",parame.toArray());
+		}
+	}
+	public Product findById(String id,String company_id){
+		return dao.findFirst("select t.*,t.sale_price,t.purchase_price,cust.name customer_name from "
+				+ tableName + " t left join "+ Customer.tableName +" cust on cust.id=t.customer_id  where t.company_id=? and t.id=? ",company_id,id);
+	}
+	/**禁用或激活*/
+	public void disable(String id,String company_id) {
+		Db.update("update "+tableName+" set status=case when status=0 then 1 else 0 end where id=? and company_id=?",id,company_id);
+	}
+	
+	public void insert(Map<String, Object> params,String company_id){
+		String unit = "";
+		String catory_b = "";
+		String catory_s = "";
+		String spc = params.get("spc")==null?"":params.get("spc").toString();
+		List<Record> list = Db.find("select * from sso_parame where name=?", spc.trim());
+		if (list.size()==0) {
+			String id = IdGenerater.me.diValFromPool();
+			Db.update("insert into sso_parame(id,company_id,name,sort_num,type)values(?,?,?,?,?)",id,company_id,spc,1,1);
+			unit = id;
+		}else {
+			unit = list.get(0).get("id");
+		}
+		String catory_b_1 = params.get("catory_b")==null?"":params.get("catory_b").toString();
+		List<Record> list1 = Db.find("select * from sso_parame where name=?", catory_b_1.trim());
+		if (list1.size()==0) {
+			String id = IdGenerater.me.diValFromPool();
+			Db.update("insert into sso_parame(id,company_id,name,sort_num,type) values(?,?,?,?,?)",id,company_id,catory_b_1,1,0);
+			catory_b = id;
+			String catory_s_1 = params.get("catory_s")==null?"":params.get("catory_s").toString();
+			List<Record> list2 = Db.find("select * from sso_parame where name=? and parent_id=?", catory_s_1,id);
+			if (list2.size()==0) {
+				String id1 = IdGenerater.me.diValFromPool();
+				Db.update("insert into sso_parame(id,company_id,name,parent_id,sort_num,type) values(?,?,?,?,?,?)",id1,company_id,catory_s_1,id,1,0);
+				catory_s = id1;
+			}else {
+				catory_s =  list2.get(0).get("id");
+			}
+		}else {
+			catory_b = list1.get(0).get("id");
+			String catory_s_1 = params.get("catory_s")==null?"":params.get("catory_s").toString();
+			List<Record> list2 = Db.find("select * from sso_parame where name=? and parent_id=?", catory_s_1,catory_b);
+			if (list2.size()==0) {
+				String id1 = IdGenerater.me.diValFromPool();
+				Db.update("insert into sso_parame(id,company_id,name,parent_id,sort_num,type) values(?,?,?,?,?,?)",id1,company_id,catory_s_1,catory_b,1,0);
+				catory_s = id1;
+			}else {
+				catory_s =  list2.get(0).get("id");
+			}
+		}
+		String id2 = IdGenerater.me.diValFromPool();
+		Db.update("insert into "+tableName+"(id,company_id,billsn,name,category,category_m,brand,model,packformat,"
+				+ "purchase_price,sale_price,unit,cycle,expired,expiredremind,packunit,spec,rate,moq,len,kuan,heigh,chird_brand,customer_id,sellpoint,remark) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+				id2,company_id,params.get("billsn"),params.get("name"),catory_b,catory_s,params.get("brand"),
+				params.get("model"),params.get("packformat"),params.get("price_c"),params.get("price_s"),unit,params.get("caigou"),params.get("baozhi"),
+				params.get("baozhitixin"),params.get("baozhuangspc"),params.get("guige"),params.get("rate"),
+				params.get("min_num"),params.get("length"),params.get("kuan"),params.get("height"),params.get("chirdBrand"),"L0k9",params.get("maidian"),params.get("pizhu"));
+	}
+	
+	public List<Record> findProductList(Map<String, Object> filter,Integer qryType) {
+		List<Object> parame=new ArrayList<Object>();
+		StringBuffer sql=new StringBuffer("select t.id,t.id product_id,t.name,t.name product_name,t.unit,t.stock_warn,t.billsn,t.status,t.model,t.sale_price,t.purchase_price,t.remark,t.category,t.brand,t.spec,t.weight,t.moq,t.cycle,t.expired,t.expiredremind,t.packunit,t.packformat,t.lwh,t.sellpoint,t.imgurl,t.customer_id");
+		sql.append(" from ");
+		sql.append(tableName );
+		sql.append(" t left join "+Parame.tableName );
+		sql.append(" p on t.category=p.id where t.company_id=?  " );
+		parame.add(filter.get("company_id"));
+		String keyword=(String)filter.get("keyword");
+		if(StringUtils.isNotEmpty(keyword)){
+			sql.append(" and (t.name like ? or t.sn like ?)");
+			keyword="%"+keyword+"%";
+			parame.add(keyword);
+			parame.add(keyword);
+		}
+		String category=(String)filter.get("category");//
+		if(StringUtils.isNotEmpty(category)){
+			sql.append(" and (t.category=? or p.parent_id=? )");
+			parame.add(category);
+			parame.add(category);
+		}
+		return Db.find(sql.toString(),parame.toArray());
+	}
+	@Before(Tx.class)
+	public void impl(List<Map<String, Object>> dataList, String company_id,String userid,List<String>plist,String now){
+		for(Map<String,Object> map:dataList){
+			Product pro=new Product();
+			for(int i=0;i<plist.size();i++){
+				String cl=plist.get(i);
+				if(map.get(cl)!=null&&!("").equals(map.get(cl))){
+					if(cl.equals("sale_price")||cl.equals("weight")||cl.equals("purchase_price")){
+						pro.set(cl, Double.valueOf(map.get(cl).toString()));
+					}else{
+						pro.set(cl,map.get(cl));
+					}
+				}
+				
+				
+			}
+			pro.set("company_id",company_id);
+			pro.save();
+			
+		}
+	}
+}

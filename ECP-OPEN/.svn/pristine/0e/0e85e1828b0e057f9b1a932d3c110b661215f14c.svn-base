@@ -1,0 +1,28 @@
+jdbc.driverClassName=org.postgresql.Driver
+jdbc.url=jdbc:postgresql://119.23.128.236:5432/postgres
+#jdbc.url=jdbc:postgresql://172.16.100.2:5432/ecp
+jdbc.database=postgres
+jdbc.username=postgres
+jdbc.password=
+jdbc.dbType=postgresql
+jdbc.encrypt=1
+jdbc.showsql=true
+#JFinal 设置
+#开发模式
+jfinal.devmode=true
+#项目包 用于指定ClassSearcher加载
+package=net.loyin
+cookie_field_key=ecp_cookie
+server_domain=127.0.0.1
+mail.saveDir=D:/workspace/lentis/ECP/WebContent/upload/mailBox
+webkey=f0934jiafd
+power_check=true
+maxpostsize=104857600
+power_url_exclude=/,/login,/findpwd,/ValidCode,/logout,/?f,/reg
+
+#mail
+mail.smtp.host=smtp.qq.com
+mail.smtp.port=25
+mail.ssl.smtp.port=465
+mail.username=313550520@qq.com
+mail.password=qnjlvndqiuknbgeb

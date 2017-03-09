@@ -1,0 +1,36 @@
+<#include "../../inc/layout.html">
+<@layout title="订单" js="crm/custService/view.js">
+<style>
+body{background:#fff;display:block;}
+</style>
+<div class="manage-wrapper" ms-controller="view">
+   <div class="manage-wrap">
+    		<ul class="mod-form-rows base-form" >
+    			<li class="row-item">
+    				<div class="label-wrap"><label>客户姓名</label></div>
+    				<div class="ctn-wrap">{{data.name}}</div>
+    			</li>
+    			<li class="row-item">
+    				<div class="label-wrap"><label>联系电话</label></div>
+    				<div class="ctn-wrap">{{data.telephone}}</div>
+    			</li>
+    			<li class="row-item">
+    				<div class="label-wrap"><label>订单时间</label></div>
+    				<div class="ctn-wrap">{{data.date}}</div>
+    			</li>
+    			<li class="row-item">
+    				<div class="label-wrap"><label>住址</label></div>
+    				<div class="ctn-wrap">{{data.address}}</div>
+    			</li>
+    			<li class="row-item">
+    				<div class="label-wrap"><label>商品</label></div>
+    				<div class="ctn-wrap">{{data.post}}</div>
+    			</li>
+    			<li class="row-item">
+    				<div class="label-wrap"><label>备注</label></div>
+    				<div class="ctn-wrap">{{data.description}}</div>
+    			</li>
+    		</ul>
+    </div>
+</div>
+</@layout>

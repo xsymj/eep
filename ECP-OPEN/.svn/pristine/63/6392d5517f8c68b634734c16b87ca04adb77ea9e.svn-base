@@ -1,0 +1,382 @@
+package net.loyin.ctrl.scm;
+
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.imageio.ImageIO;
+
+import net.loyin.ctrl.AdminBaseController;
+import net.loyin.jfinal.anatation.PowerBind;
+import net.loyin.jfinal.anatation.RouteBind;
+import net.loyin.model.crm.Customer;
+import net.loyin.model.scm.Product;
+import net.loyin.model.sso.Parame;
+import net.loyin.model.sso.SnCreater;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFClientAnchor;
+import org.apache.poi.hssf.usermodel.HSSFPatriarch;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import com.jfinal.plugin.activerecord.Page;
+import com.jfinal.plugin.activerecord.Record;
+import com.jfinal.upload.UploadFile;
+/**
+ * 
+ * @author 龙影
+ */
+@RouteBind(path="product",sys="进销存",model="产品")
+public class ProductCtrl extends AdminBaseController<Product> {
+	public ProductCtrl(){
+		this.modelClass=Product.class;
+	}
+	public void dataGrid() {
+		Map<String,String>userMap=this.getUserMap();
+		Map<String,Object> filter=new HashMap<String,Object>();
+		filter.put("company_id",userMap.get("company_id"));
+		filter.put("keyword",this.getPara("keyword"));
+		filter.put("category",this.getPara("category"));
+		this.sortField(filter);
+		String type = this.getPara("type")==null?"":getPara("type").toString();
+		if (StringUtils.isNoneEmpty(type)) {
+			System.out.println("ProductCtrl.dataGrid()");
+			List list = Product.dao.list(filter);
+			this.rendJson(true,null, "success", list);
+		}else {
+			Page<Product> page = Product.dao.pageGrid(getPageNo(), getPageSize(),filter);
+			this.rendJson(true,null, "success", page);
+		}
+	}
+	
+
+
+	public void qryOp() {
+		getId();
+		Product m = Product.dao.findById(id, this.getCompanyId());
+		if (m != null)
+			this.rendJson(true,null, "", m);
+		else
+			this.rendJson(false,null, "记录不存在！");
+	}
+	@PowerBind(code={"A2_1_E","A3_1_E"},funcName="编辑")
+	public void save() {
+		try {
+			Product po = (Product) getModel();
+			if (po == null) {
+				this.rendJson(false,null, "提交数据错误！");
+				return;
+			}
+			getId();
+			String sn=po.getStr("billsn");
+			String company_id=this.getCompanyId();
+			if (StringUtils.isEmpty(id)) {
+				if(StringUtils.isEmpty(sn))
+				{
+					sn=SnCreater.dao.create("PRODUCT", company_id);
+					po.set("billsn",sn);
+				}
+				po.set("company_id",company_id);
+				po.save();
+			} else {
+				po.update();
+			}
+			Map<String,Object> data=new HashMap<String,Object>();
+			data.put("id",id);
+			data.put("sn",sn);
+			this.rendJson(true,null, "操作成功！",data);
+		} catch (Exception e) {
+			log.error("保存产品异常", e);
+			this.rendJson(false,null, "保存数据异常！");
+		}
+	}
+	@PowerBind(code={"A2_1_E","A3_1_E"},funcName="删除")
+	public void del() {
+		try {
+			getId();
+			Product.dao.del(id,this.getCompanyId());
+			rendJson(true,null,"删除成功！",id);
+		} catch (Exception e) {
+			log.error("删除异常", e);
+			rendJson(false,null,"删除失败！",id);
+		}
+	}
+	@PowerBind(code={"A2_1_E","A3_1_E"},funcName="编辑")
+	public void disable(){
+		getId();
+		try{
+			Product.dao.disable(id,this.getCompanyId());
+			this.rendJson(true,null, "操作成功！", id);
+		}catch(Exception e){
+			this.rendJson(false,null, "操作失败！");
+		}
+	}
+	
+	/**导出*/
+	@PowerBind(code="A1_1_O",funcName="导出")
+	public void expout(){
+		Map<String,String>userMap=this.getUserMap();
+		Map<String,Object> filter=new HashMap<String,Object>();
+		filter.put("company_id",userMap.get("company_id"));
+		filter.put("keyword",this.getPara("keyword"));
+		filter.put("category",this.getPara("category"));
+		this.sortField(filter);
+		List<Record> proList=Product.dao.findProductList(filter,this.getParaToInt("qryType",0));
+		
+		try {
+			if(proList!=null&&proList.isEmpty()==false){
+				String now=dateFormat.format(new Date());
+				this.getResponse().reset();// 清空输出流
+				
+				this.getResponse().setHeader("Content-disposition", "attachment; filename="+new String((now+"导出商品.xls").getBytes(),"iso-8859-1"));// 设定输出文件头
+				this.getResponse().setContentType("application/msexcel;charset=utf-8");// 定义输出类型
+				OutputStream os = this.getResponse().getOutputStream();// 取得输出流
+				 BufferedImage bufferImg = null;     
+				//自定义参数
+				List<Parame> plist=Parame.dao.list(userMap.get("company_id"));
+				Map<String,String>pMap=new HashMap<String,String>();
+				Map<String,String>ppMap=new HashMap<String,String>();//父id
+				for(Parame p:plist){
+					pMap.put(p.getStr("id"),p.getStr("name"));
+					ppMap.put(p.getStr("id"),p.getStr("parent_id"));
+				}
+				List<Customer> cuslist=Customer.dao.list(userMap.get("company_id"));
+				Map<String,String> cusMap=new HashMap<String,String>();
+				for(Customer p:cuslist){
+					cusMap.put(p.getStr("id"),p.getStr("name"));
+				}
+				
+				File xls=new File(this.getRequest().getRealPath("/excel/采购商品导出.xls"));
+				FileInputStream is=new FileInputStream(xls);
+				Workbook wb =null;
+				try{
+					wb=new HSSFWorkbook(is);
+				}catch(Exception e){
+					is.close();
+					try{
+						wb=new XSSFWorkbook(is);
+					}catch(Exception e1){
+						throw e1;
+					}
+				}
+				HSSFSheet sheet = (HSSFSheet) wb.getSheetAt(0);
+				 //画图的顶级管理器，一个sheet只能获取一个（一定要注意这点）  
+	            HSSFPatriarch patriarch = sheet.createDrawingPatriarch();     
+	            sheet.autoSizeColumn(1, true);
+				HSSFRow row2 =sheet.getRow(1);
+				List<String> clist=new ArrayList<String>();//定义的列名
+				for(int j=0;j<26;j++){
+					HSSFCell cell=row2.getCell(j);
+					if(cell!=null){
+						String colname=cell.getStringCellValue();
+						clist.add(colname);
+						
+					}
+				}
+				int i=0;
+				for(Record c:proList){
+					HSSFRow row =sheet.createRow(1+i);
+					row.setHeight((short) 250);
+					//HSSFCell cell = row.createCell(0);
+					i++;
+					//cell.setCellValue(i);
+					int k=0;
+					for(String cl:clist){
+						Object v=c.get(cl);
+						if(k==0){
+							v=pMap.get(ppMap.get(v));
+						}
+						if(k==1||k==7||k==16){
+							v=pMap.get(v);
+						}
+						if(k==18||k==19||k==20){
+							if(v!=null){
+								v=v.toString();
+								v=v.toString().split("\\*")[k-18];
+							}
+						}
+						if(k==21){
+							v=cusMap.get(v);
+						}
+						if(k==22&&v!=null){
+							ByteArrayOutputStream byteArrayOut = new ByteArrayOutputStream();   
+							bufferImg = ImageIO.read(new File(this.getRequest().getRealPath(v.toString())));     
+				            ImageIO.write(bufferImg, "jpg", byteArrayOut);  
+				            /** 
+				             * anchor主要用于设置图片的属性  
+				             * 该构造函数有8个参数 
+				             * 前四个参数是控制图片在单元格的位置，分别是图片距离单元格left，top，right，bottom的像素距离 
+				             * 后四个参数，前连个表示图片左上角所在的cellNum和 rowNum，后天个参数对应的表示图片右下角所在的cellNum和 rowNum， 
+				             * excel中的cellNum和rowNum的index都是从0开始的 
+				             *  
+				             */  
+				            HSSFClientAnchor anchor = new HSSFClientAnchor(0, 0, 50, 50,(short) k, i+1,(short)(k+1), i+2);     
+				            anchor.setAnchorType(3);
+				            //插入图片    
+				            patriarch.createPicture(anchor, wb.addPicture(byteArrayOut.toByteArray(), HSSFWorkbook.PICTURE_TYPE_JPEG));
+				            k++;
+				            continue;
+						}
+						
+						if(v!=null){
+							HSSFCell cell_ = row.createCell(k);
+							cell_.setCellValue(v.toString());
+						}
+						k++;
+					}
+				}
+				wb.write(os);
+				os.flush();
+				os.close();
+			}
+		} catch (Exception ex) {
+			log.error("导出excel异常",ex);
+		}
+		this.renderNull();
+	}
+	
+	/**上传excel文件
+	 * @throws IOException */
+	@PowerBind(code="A1_1_O",funcName="导入")
+	public void saveFile() throws IOException{
+		Map<String,String>userMap=this.getUserMap();
+		Map<String, Object> param = new HashMap<String,Object>();
+		UploadFile uf=this.getFile();
+		if(uf==null||uf.getFile()==null){
+			this.rendJson(false, null, "文件未上传！");
+			return;
+		}
+		String userid=this.getPara(0);
+		String company_id=this.getPara(1);
+		if(StringUtils.isEmpty(userid)){
+			this.rendJson(false, null, "参数不正确！");
+			return;
+		}
+	
+		File file = uf.getFile();
+		FileInputStream is_1;
+		Workbook wb1 =null;
+			try {
+				is_1 = new FileInputStream(file);
+				wb1 = new HSSFWorkbook(is_1);
+				HSSFSheet sheet_1 = (HSSFSheet) wb1.getSheetAt(0);
+				if (sheet_1.getLastRowNum()>0) {
+					for (int i = 1; i < sheet_1.getLastRowNum(); i++) {
+						HSSFRow row3 = sheet_1.getRow(i);
+						HSSFCell cell = row3.getCell(1);
+						if (cell != null) {
+							String colname=cell.getStringCellValue();
+							List list = Product.dao.find("select * from scm_product where billsn=?", colname);
+							List  list2  = new ArrayList();
+							if (list.size()==0) {
+								for (int j = 1; j<row3.getLastCellNum(); j++) {	
+									row3.getCell(j).setCellType(Cell.CELL_TYPE_STRING);
+									HSSFCell cell2=row3.getCell(j);
+									param.put("billsn", row3.getCell(j++).getRichStringCellValue().getString());
+									param.put("name", row3.getCell(j++).getRichStringCellValue().getString());
+									param.put("brand", row3.getCell(j++).getRichStringCellValue().getString());
+									row3.getCell(j).setCellType(Cell.CELL_TYPE_STRING);
+									param.put("xinhao", row3.getCell(j++).getStringCellValue());
+									param.put("guige", row3.getCell(j++).getRichStringCellValue().getString());
+									param.put("spc", row3.getCell(j++).getRichStringCellValue().getString());
+									param.put("price_c", row3.getCell(j++).getNumericCellValue());
+									param.put("before_price_c", row3.getCell(j++).getNumericCellValue());
+									param.put("date_c", row3.getCell(j++).getRichStringCellValue().getString());
+									param.put("reason_c", row3.getCell(j++).getRichStringCellValue().getString());
+									param.put("rate", row3.getCell(j++).getNumericCellValue());
+									param.put("price_s", row3.getCell(j++).getNumericCellValue());
+									param.put("before_price_s", row3.getCell(j++).getNumericCellValue());
+									param.put("date_s", row3.getCell(j++).getRichStringCellValue().getString());
+									param.put("reason_s", row3.getCell(j++).getRichStringCellValue().getString());
+									param.put("gongying",  row3.getCell(j++).getRichStringCellValue().getString());
+									param.put("pizhu",  row3.getCell(j++).getRichStringCellValue().getString());
+									break;
+								}
+								Product.dao.insert(param,userMap.get("company_id"));
+							}
+						}
+					}
+					is_1.close();
+					this.rendJson(true, null, "导入商品资料成功！");
+				}else {
+					this.rendJson(false,null,"文件数据为空！");
+				}
+			} catch (Exception e) {
+				try{
+					is_1 = new FileInputStream(file);
+					wb1 =new XSSFWorkbook(is_1);
+					XSSFSheet sheet_1 = (XSSFSheet) wb1.getSheetAt(0);
+					if (sheet_1.getLastRowNum()>0) {
+						for (int i = 1; i < sheet_1.getLastRowNum(); i++) {
+							XSSFRow row3 = sheet_1.getRow(i);
+							XSSFCell cell = row3.getCell(1);
+							if (cell != null) {
+								String colname=cell.getStringCellValue();
+								List list = Product.dao.find("select * from scm_product where billsn=?", colname);
+								List  list2  = new ArrayList();
+								if (list.size()==0) {
+									for (int j = 1; j<row3.getLastCellNum(); j++) {	
+										row3.getCell(j).setCellType(Cell.CELL_TYPE_STRING);
+										XSSFCell cell2=row3.getCell(j);
+										param.put("billsn", row3.getCell(j++).getRichStringCellValue().getString());
+										param.put("name", row3.getCell(j++).getRichStringCellValue().getString());
+										param.put("brand", row3.getCell(j++).getRichStringCellValue().getString());
+										row3.getCell(j).setCellType(Cell.CELL_TYPE_STRING);
+										param.put("xinhao", row3.getCell(j++).getStringCellValue());
+										param.put("guige", row3.getCell(j++).getRichStringCellValue().getString());
+										param.put("spc", row3.getCell(j++).getRichStringCellValue().getString());
+										param.put("price_c", row3.getCell(j++).getNumericCellValue());
+										param.put("before_price_c", row3.getCell(j++).getNumericCellValue());
+										param.put("date_c", row3.getCell(j++).getRichStringCellValue().getString());
+										param.put("reason_c", row3.getCell(j++).getRichStringCellValue().getString());
+										param.put("rate", row3.getCell(j++).getNumericCellValue());
+										param.put("price_s", row3.getCell(j++).getNumericCellValue());
+										param.put("before_price_s", row3.getCell(j++).getNumericCellValue());
+										param.put("date_s", row3.getCell(j++).getRichStringCellValue().getString());
+										param.put("reason_s", row3.getCell(j++).getRichStringCellValue().getString());
+										param.put("gongying",  row3.getCell(j++).getRichStringCellValue().getString());
+										param.put("pizhu",  row3.getCell(j++).getRichStringCellValue().getString());
+										break;
+									}
+									Product.dao.insert(param,userMap.get("company_id"));
+								}
+							}
+						}
+						is_1.close();
+						this.rendJson(true, null, "导入商品资料成功！");
+					}else {
+						this.rendJson(false,null,"文件数据为空！");
+					}
+				}catch(Exception e1){
+					log.error(e1);
+					System.out.println("ProductCtrl.saveFile()"+e1);
+					this.rendJson(false,null,"处理文件异常!请保证格式及数据是否正确!"+e1.getMessage());
+				}
+			} finally{
+				this.rendJson(false,null,"处理文件异常!请保证格式及数据是否正确!");
+			}
+	}
+}
+

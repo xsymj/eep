@@ -1,0 +1,38 @@
+<#include "../../inc/layout.html">
+<@layout title="全部订单" js="crm/custService/edit.js">
+<style>
+body{background:#fff;display:block;}
+</style>
+<div class="manage-wrapper" ms-controller="view">
+   <div class="manage-wrap" style="padding-top:5px;">
+    <form action=""id="base_form">
+    	<ul class="mod-form-rows base-form" >
+    			<li class="row-item">
+    				<div class="label-wrap"><label>客户姓名</label></div>
+    				<div class="ctn-wrap"><input type="text" class="ui-input" ms-duplex="data.name"id="c_name" data-rule="required;"  maxlength="20" placeholder="请输入客户名称"></div>
+    			</li>
+    			<li class="row-item">
+    				<div class="label-wrap"><label>联系电话</label></div>
+    				<div class="ctn-wrap"><input type="text" class="ui-input" ms-duplex="data.telephone"id="c_telephone" maxlength="20" placeholder="请输入电话"></div>
+    			</li>
+    			<li class="row-item">
+    				<div class="label-wrap"><label>订单时间</label></div>
+    				<div class="ctn-wrap"><input type="text" class="ui-input" ms-duplex="data.department"id="c_depart" maxlength="20" placeholder="请输入部门"></div>
+    			</li>
+    			<li class="row-item">
+    				<div class="label-wrap"><label>住址</label></div>
+    				<div class="ctn-wrap"><input type="text" class="ui-input" ms-duplex="data.post"id="c_post" maxlength="20" placeholder="请输入职位"></div>
+    			</li>
+    			<li class="row-item">
+    				<div class="label-wrap"><label>商品</label></div>
+    				<div class="ctn-wrap"><input type="text" class="ui-input" ms-duplex="data.email"id="cemail" maxlength="50" placeholder="请输入邮箱"></div>
+    			</li>
+    			<li class="row-item">
+    				<div class="label-wrap"><label>备注</label></div>
+    				<div class="ctn-wrap"><textarea class="ui-input" ms-duplex="data.description" placeholder="请输入客户名称"></textarea></div>
+    			</li>
+    	</ul>
+    	</form>
+    </div>
+</div>
+</@layout>

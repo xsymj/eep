@@ -1,0 +1,26 @@
+<#include "../../inc/layout.html">
+    <@layout title="供应商管理" js="scm/supplier/plus.js">
+    <style>
+        body{background:#fff;display:block;}
+        .supplier-name{
+            margin: 10px;
+            font-size: 16px;
+        }
+    </style>
+    <div ms-controller="plus" style="position: relative">
+        <div class="supplier-name">
+            供应商名称：{{data.name}}
+        </div>
+        <ul style="overflow: hidden; height: auto">
+            <li ms-repeat="product" style="float: left;margin-left: 15px;width: 100px">
+                <label><input ms-value="{{el.id}}" type="checkbox" value="" ms-click="pushArr(this)" />{{el.name}} </label>
+            </li>
+        </ul>
+        <div>
+            <!--<button id='sure' ms-click="f1(1)" style="margin-top: 30px;display: inline-block;width: 40px;height: 30px;margin-left: 90%">确认</button>-->
+            <!--<button id='cancle' ms-click="cancle(1)" style="position: absolute; bottom: 20px;right: 20px">取消</button>-->
+        </div>
+    </div>
+
+</@layout>
+

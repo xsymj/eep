@@ -1,0 +1,7 @@
+<#include "../../inc/layout.html">
+    <@layout title="供应商管理" js="scm/supplier/edit.js">
+    <style>
+        body{background:#fff;display:block;}
+    </style>
+    <div style="color: red">哈哈</div>
+</@layout>

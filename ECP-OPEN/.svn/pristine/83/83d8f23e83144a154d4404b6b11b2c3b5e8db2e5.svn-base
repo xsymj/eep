@@ -1,0 +1,311 @@
+<#include "../../inc/layout.html">
+<@layout title="出库入库" js="scm/storageBill/edit.js">
+<style>
+body{background: #fff;}
+#prodcutTable .ui-input{width:100%;}
+.comboDiv{position:absolute;left:152px;}
+.comboDiv ul li{margin:2px; }
+.table .comboDiv{position:absolute;left:152px;}
+.table tbody tr td{padding:0px;}
+.table tbody tr td .ui-input{width:100%;height:34px;}
+.table tbody tr .tdPd{padding:8px;}
+.table1 td{padding:2px;}
+</style>
+<div class="manage-wrapper" ms-controller="ctrl">
+    <div class="manage-wrap">
+    	<form action=""id="base_form">
+   				<table style="width:100%;" class="table1">
+   				<tr>
+   					<td width="10%" align="left">仓库：</td>
+   					<td width="20%">
+   					<select ms-duplex="data.depot_id" class="ui-input" style="width:200px" data-msg="调出仓库必选" data-rule="required">
+   						<option ms-repeat="depotList" ms-value="el.id">{{el.name}}</option>
+   					</select>
+   					<!--<span ms-if="fillOrder">{{billType[data.type]}}</span>-->
+   					</td>
+                    <td width="10%" align="left">出入库方式：</td>
+                    <td width="20%">
+                        <select ms-duplex="data.type" class="ui-input" style="width:200px;" ms-if="fillOrder==false || !buyOrder||!returnOrder||!meterialOrder||!transfersOrder||!receiveOrder">
+                            <option ms-repeat="billType" ms-value="$index">{{el}}</option>
+                        </select>
+                        <div ms-if="buyOrder||returnOrder||meterialOrder||transfersOrder||receiveOrder">
+                            <!--{{billType[type]}}-->
+                            {{billType[data.type]}}
+                        </div>
+                    </td>
+   				</tr>
+   				<tr ms-if="buyOrder">
+   					<td width="100px" align="left">入库日期：</td>
+   					<td width="20%"><input id="sign_date" class="ui-input ui-datepicker-input" style="width:200px;" ms-duplex="data.bill_date" data-msg="单据日期" data-rule="required;"></td>
+   					<td width="100px;" align="left">单据编号：</td>
+   					<td width="20%">{{data.billsn}}</td>
+   				</tr>
+   				<tr ms-if="returnOrder">
+   					<td width="100px" align="left">退货日期：</td>
+   					<td width="20%"><input id="sign_date" class="ui-input ui-datepicker-input" style="width:200px;" ms-duplex="data.bill_date" data-msg="单据日期" data-rule="required;"></td>
+   					<td width="100px;" align="left">单据编号：</td>
+   					<td width="20%">{{data.billsn}}</td>
+   				</tr>
+   				<!--<tr ms-if="buyOrder">-->
+   					<!--<td width="100px" align="left">收货人：</td>-->
+   					<!--<td>-->
+                        <!--<input type="text" class="ui-input" style="width:200px" id="consignee_name" ms-duplex="data.consignee_name">-->
+                    <!--</td>-->
+   					<!--<td width="100px" align="left">送货人：</td>-->
+   					<!--<td>-->
+                        <!--<input type="text" class="ui-input" style="width:200px " id="sender_name" ms-duplex="data.sender_name">-->
+                    <!--</td>-->
+   				<!--</tr>-->
+   				<tr ms-if="returnOrder">
+   					<td width="100px" align="left">收货人：</td>
+   					<td><input type="text" class="ui-input" style="width:200px"></td>
+   					<td width="100px" align="left">退货人：</td>
+   					<td><input type="text" class="ui-input" style="width:200px"></td>
+   				</tr>
+   				<tr ms-if="buyOrder||returnOrder">
+   					<td align="left" width="130px"><span>供货供应商</span><font color="red">*</font>：</td>
+   					<td width="15%">
+    					<input type="text" id="customer" class="ui-input" autocomplete="off"  ms-keyup="qryCustomer(this.value)" ms-click="qryCustomer(this.value)" ms-duplex="data.customer_name" style="width:200px">
+	          			<div class="comboDiv" style="width:200px;" ms-visible="custComboV">
+	          				<div ms-repeat="customerList" ms-click="chooseCust(el)">{{el.sn}}&nbsp;&nbsp;{{el.name}}</div>
+	          			</div>
+   					</td>
+   				</tr>
+   				
+   				
+   				<tr ms-if="meterialOrder||receiveOrder||transfersOrder||saleOrder||salereturnOrder">
+    					<td align="left" width="220px" ms-if="meterialOrder||receiveOrder||saleOrder||salereturnOrder">合同号：</td>
+    					<td align="left" width="220px" ms-if="transfersOrder">调拨部门：</td>
+    					<td ms-if="meterialOrder||receiveOrder||saleOrder||salereturnOrder">
+                            <input ms-duplex="data.agreement" class="ui-input" style="width:180px;" id="agreement" data-rule="required" data-msg="请填写合同号">
+                        </td>
+    					<td ms-if="transfersOrder"><input ms-duplex="data.ordersn" class="ui-input" style="width:180px;" id="ordersn" data-rule="required" data-msg="请填写调拨部门"></td>
+    					<td align="left" width="220px" ms-if="meterialOrder||salereturnOrder">退料日期：</td>
+    					<td align="left" width="220px" ms-if="transfersOrder||receiveOrder||saleOrder">送货日期：</td>
+    					<td width="20%"><input id="sign_date" class="ui-input ui-datepicker-input" style="width:180px;" ms-duplex="data.sign_date" data-msg="单据日期" data-rule="required;"></td>
+    					<!-- <td><input id="date1" class="ui-input ui-datepicker-input" style="width:100px" ms-duplex="data.delivery_date" data-rule="required;" data-msg="请选择发货日期/退货日期"></td> -->
+    					<td align="left" width="220px"  ms-if="meterialOrder||salereturnOrder">退料单号：</td>
+    					<td align="left" width="220px"  ms-if="transfersOrder">调拨单号：</td>
+    					<td align="left" width="220px"  ms-if="receiveOrder||saleOrder">出库单号：</td>
+    					<td width="20%">{{data.billsn}}</td>
+    				</tr>
+    				<tr ms-if="meterialOrder||receiveOrder||transfersOrder||saleOrder||salereturnOrder">
+    					<td align="left" width="220px" >收货联系人：</td>
+    					<td>
+                            <input ms-duplex="data.consignee_name" class="ui-input" style="width:180px;" id="consignee_name" data-rule="required" data-msg="请填写联系人姓名">
+                        </td>
+    					<td align="left" width="220px" >联系人电话：</td>
+    					<td>
+                            <input ms-duplex="data.consignee_phone" class="ui-input" style="width:180px;" id="consignee_phone" data-rule="required" data-msg="请填写联系人电话">
+                        </td>
+    					<td align="left" width="220px" >负责人：</td>
+    					<td><select ms-duplex="data.head_id" class="ui-input" style="width:180px;" data-rule="required" data-msg="请选择负责人">
+    					<option ms-repeat="userList" ms-value="el.id">{{el.realname}}({{el.department_name}}-{{el.position_name}})</option>
+    				</select></td>
+    				</tr>
+    				<tr ms-if="meterialOrder||receiveOrder||transfersOrder||saleOrder||salereturnOrder">
+    					<td align="left" width="220px">地址：</td>
+    					<td>
+                            <input ms-duplex="data.address" class="ui-input" style="width:180px" id="address" data-rule="required" data-msg="请填写地址" colspan="3">
+                        </td>
+    				</tr>
+   				</table>
+    		</ul>
+    		<br>
+    		
+    		
+    		
+    		<table class="table table-hover table-striped table_thead_fixed table-bordered table-condensed" id="prodcutTable" ms-if="buyOrder">
+  				<thead>
+  					<tr>
+  						<th width="80px" class="tx">序号</th>
+  						<th width="70px">&nbsp;</th>
+  						<th width="167px" class="tx">商品编码</th>
+  						<th width="167px" class="tx">商品名称</th>
+  						<th width="167px" class="tx">品牌</th>
+  						<th width="167px" class="tx">型号</th>
+  						<th width="167px" class="tx">规格</th>
+  						<th width="70px" class="tx">计量单位</th>
+  						<th width="167px" class="tx">数量</th>
+  						<!--<th width="167px" class="tx">入仓区域</th>-->
+  						<th width="167px" class="tx">备注</th>
+  					</tr>
+  				</thead>
+  				<tbody style="max-height:400px;">
+  					<tr ms-repeat="data.productlist">
+  						<td class="tdPd tx">{{$index+1}}</td>
+  						<td class="tdPd tx"><nobr><i class="fa fa-plus mrb" ms-click="addRow" title="移除"></i><i class="fa fa-trash mrb" ms-click="delRow" title="移除"></i></nobr></td>
+  						<td class="tdPd tx" align="left">{{el.billsn}}</td>
+  						<td class="tx">
+	          			<input type="text"class="ui-input tx" ms-attr-id="ix{{$index}}" autocomplete="off" ms-keyup="qryProduct(this.value,$index)"ms-click="qryProduct(this.value,$index)"
+	          			 ms-duplex="el.product_name" data-rule="required;" data-msg="请选择商品">
+	          			<div class="comboDiv" style="width:260px;" ms-visible="productComboDiv==$index">
+	          				<div ms-repeat="productlist" ms-click="chooseProduct(el,productComboDiv)">{{el.billsn}}	&nbsp;&nbsp;{{el.product_name}}</div>
+	          			</div></td>
+	          			<td class="tdPd tx" align="left">{{el.brand}}</td>
+	          			<td class="tdPd modelEdit" align="left">{{el.model}}</td>
+	          			<td class="tdPd" align="left">{{el.spec}}</td>
+	          			<td class="tdPd">{{el.unit|custParame}}</td>
+  						<td class="tx">
+                            <input class="ui-input tx" ms-attr-id="id3{{$index}}"data-rule="required;number" ms-duplex="el.amount" ms-change="jisuan">
+                        </td>
+  						<!--<td class="tx">-->
+                            <!--<input class="ui-input" ms-value="el.remark" ms-attr-id="id8{{$index}}"maxlength="30" ms-duplex="el.remark" />-->
+                        <!--</td>-->
+  						<td class="tx">
+                            <input class="ui-input" ms-attr-id="id8{{$index}}"  ms-duplex="el.remark" ms-value="el.remark">
+                        </td>
+  					</tr>
+  				</tbody>
+  				<tfoot>
+  					<tr>
+  						<td ms-attr-colspan="(type==4?7:6)" align="center"><b>数量合计：</b></td>
+  						<td align="center" colspan="8">{{(sumAmount)}}</td>
+  					</tr>
+  				</tfoot>
+    		</table>
+    		<table class="table table-hover table-striped table_thead_fixed table-bordered table-condensed" id="prodcutTable" ms-if="returnOrder">
+  				<thead>
+  					<tr>
+  						<th width="80px" class="tx">序号</th>
+  						<th width="70px">&nbsp;</th>
+  						<th width="167px" class="tx">商品编码</th>
+  						<th width="167px" class="tx">商品名称</th>
+  						<th width="167px" class="tx">品牌</th>
+  						<th width="167px" class="tx">型号</th>
+  						<th width="167px" class="tx">规格</th>
+  						<th width="70px" class="tx">计量单位</th>
+  						<th width="167px" class="tx">数量</th>
+  						<th width="167px" class="tx">备注</th>
+  					</tr>
+  				</thead>
+  				<tbody style="max-height:400px;">
+  					<tr ms-repeat="data.productlist">
+  						<td class="tdPd tx">{{$index+1}}</td>
+  						<td class="tdPd tx"><nobr><i class="fa fa-plus mrb" ms-click="addRow" title="移除"></i><i class="fa fa-trash mrb" ms-click="delRow" title="移除"></i></nobr></td>
+  						<td class="tdPd tx" align="left">{{el.billsn}}</td>
+  						<td class="tx">
+	          			<input type="text"class="ui-input tx" ms-attr-id="ix{{$index}}" autocomplete="off" ms-keyup="qryProduct(this.value,$index)"ms-click="qryProduct(this.value,$index)"
+	          			 ms-duplex="el.product_name" data-rule="required;" data-msg="请选择商品">
+	          			<div class="comboDiv" style="width:260px;" ms-visible="productComboDiv==$index">
+	          				<div ms-repeat="productlist" ms-click="chooseProduct(el,productComboDiv)">{{el.billsn}}	&nbsp;&nbsp;{{el.product_name}}</div>
+	          			</div></td>
+	          			<td class="tdPd tx" align="left">{{el.brand}}</td>
+	          			<td class="tdPd modelEdit" align="left">{{el.model}}</td>
+	          			<td class="tdPd" align="left">{{el.spec}}</td>
+	          			<td class="tdPd">{{el.unit|custParame}}</td>
+  						<td class="tx"><input class="ui-input tx" ms-attr-id="id3{{$index}}"data-rule="required;number" ms-duplex="el.amount" ms-change="jisuan"></td>
+  						<!--<td class="tx">-->
+                            <!--<input class="ui-input" ms-attr-id="id8{{$index}}"maxlength="30" ms-duplex="el.description">-->
+                        <!--</td>-->
+                        <td class="tx">
+                            <input class="ui-input" ms-attr-id="id8{{$index}}" ms-duplex="el.remark">
+                        </td>
+  					</tr>
+  				</tbody>
+  				<tfoot>
+  					<tr>
+  						<td ms-attr-colspan="(type==4?7:6)" align="center"><b>数量合计：</b></td>
+  						<td align="center" colspan="8">{{(sumAmount)}}</td>
+  					</tr>
+  				</tfoot>
+    		</table>
+    		
+    		
+    		<table class="table table-hover table-striped table_thead_fixed table-bordered table-condensed" id="prodcutTable" ms-if="meterialOrder||receiveOrder||transfersOrder">
+  				<thead>
+  					<tr>
+  						<th width="80px" class="tx">序号</th>
+  						<th width="70px">&nbsp;</th>
+  						<th width="167px" class="tx">商品编码</th>
+  						<th width="167px" class="tx">商品名称</th>
+  						<th width="167px" class="tx">品牌</th>
+  						<th width="167px" class="tx">型号</th>
+  						<th width="167px" class="tx">规格</th>
+  						<th width="70px" class="tx">计量单位</th>
+  						<th width="167px" class="tx">数量</th>
+  						<th width="167px" class="tx">备注</th>
+  					</tr>
+  				</thead>
+  				<tbody style="max-height:400px;">
+  					<tr ms-repeat="data.productlist">
+  						<td class="tdPd tx">{{$index+1}}</td>
+  						<td class="tdPd tx"><nobr><i class="fa fa-plus mrb" ms-click="addRow" title="移除"></i><i class="fa fa-trash mrb" ms-click="delRow" title="移除"></i></nobr></td>
+  						<td class="tdPd tx" align="left">{{el.billsn}}</td>
+  						<td class="tx">
+	          			<input type="text"class="ui-input tx" ms-attr-id="ix{{$index}}" autocomplete="off" ms-keyup="qryProduct(this.value,$index)"ms-click="qryProduct(this.value,$index)"
+	          			 ms-duplex="el.product_name" data-rule="required;" data-msg="请选择商品">
+	          			<div class="comboDiv" style="width:260px;" ms-visible="productComboDiv==$index">
+	          				<div ms-repeat="productlist" ms-click="chooseProduct(el,productComboDiv)">{{el.billsn}}	&nbsp;&nbsp;{{el.product_name}}</div>
+	          			</div></td>
+	          			<td class="tdPd tx" align="left">{{el.brand}}</td>
+	          			<td class="tdPd modelEdit" align="left">{{el.model}}</td>
+	          			<td class="tdPd" align="left">{{el.spec}}</td>
+	          			<td class="tdPd">{{el.unit|custParame}}</td>
+  						<td class="tx"><input class="ui-input tx" ms-attr-id="id3{{$index}}"data-rule="required;number" ms-duplex="el.amount" ms-change="jisuan"></td>
+  						<td class="tx"><input class="ui-input" ms-attr-id="id8{{$index}}"maxlength="30" ms-duplex="el.description"></td>
+  					</tr>
+  				</tbody>
+  				<tfoot>
+  					<tr>
+  						<td ms-attr-colspan="(type==4?7:6)" align="center"><b>数量合计：</b></td>
+  						<td align="center" colspan="8">{{(sumAmount)}}</td>
+  					</tr>
+  				</tfoot>
+    		</table>
+    		
+    		<table class="table table-hover table-striped table_thead_fixed table-bordered table-condensed" id="prodcutTable" ms-if="saleOrder||salereturnOrder">
+  				<thead>
+  					<tr>
+  						<th width="80px" class="tx">序号</th>
+  						<th width="70px">&nbsp;</th>
+  						<th width="167px" class="tx">商品编码</th>
+  						<th width="167px" class="tx">商品名称</th>
+  						<th width="167px" class="tx">品牌</th>
+  						<th width="167px" class="tx">型号</th>
+  						<th width="167px" class="tx">规格</th>
+  						<th width="70px" class="tx">计量单位</th>
+  						<!-- <th width="167px" class="tx">销售价</th> -->
+  						<th width="167px" class="tx">数量</th>
+  						<th width="167px" class="tx">金额</th>
+  						<th width="167px" class="tx">备注</th>
+  					</tr>
+  				</thead>
+  				<tbody style="max-height:400px;">
+  					<tr ms-repeat="data.productlist">
+  						<td class="tdPd tx">{{$index+1}}</td>
+  						<td class="tdPd tx"><nobr><i class="fa fa-plus mrb" ms-click="addRow" title="移除"></i><i class="fa fa-trash mrb" ms-click="delRow" title="移除"></i></nobr></td>
+  						<td class="tdPd tx" align="left">{{el.billsn}}</td>
+  						<td class="tx">
+	          			<input type="text"class="ui-input tx" ms-attr-id="ix{{$index}}" autocomplete="off" ms-keyup="qryProduct(this.value,$index)"ms-click="qryProduct(this.value,$index)"
+	          			 ms-duplex="el.product_name" data-rule="required;" data-msg="请选择商品">
+	          			<div class="comboDiv" style="width:260px;" ms-visible="productComboDiv==$index">
+	          				<div ms-repeat="productlist" ms-click="chooseProduct(el,productComboDiv)">{{el.billsn}}	&nbsp;&nbsp;{{el.product_name}}</div>
+	          			</div></td>
+	          			<td class="tdPd tx" align="left">{{el.brand}}</td>
+	          			<td class="tdPd modelEdit" align="left">{{el.model}}</td>
+	          			<td class="tdPd" align="left">{{el.spec}}</td>
+	          			<td class="tdPd">{{el.unit|custParame}}</td>
+  						<td class="tx"><input class="ui-input tx" ms-attr-id="id3{{$index}}"data-rule="required;number" ms-duplex="el.amount" ms-change="jisuan"></td>
+  						<td class="tdPd" align="left">{{el.sale_price|money}}</td>
+  						<td class="tx"><input class="ui-input" ms-attr-id="id8{{$index}}"maxlength="30" ms-duplex="el.description"></td>
+  					</tr>
+  				</tbody>
+  				<tfoot>
+  					<tr>
+  						<td ms-attr-colspan="(type==4?7:6)" align="center"><b>合计：</b></td>
+  						<td align="center" colspan="8">{{fixedNum(sumAmt)|money}}</td>
+  					</tr>
+  				</tfoot>
+    		</table>
+    		<div>
+	           <p>
+				 备注：
+	           <br>
+	           <textarea ms-duplex="data.remark" id="remark" class="ui-input" style="height:100px;width:100%;"></textarea>
+	           </p>
+       		</div>
+    	</form>
+    </div>
+</div>
+</@layout>

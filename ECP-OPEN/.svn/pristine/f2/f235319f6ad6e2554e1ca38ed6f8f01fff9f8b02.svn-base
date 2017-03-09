@@ -1,0 +1,19 @@
+<#include "../../inc/layout.html">
+    <@layout title="供应商管理" js="scm/supplier/plus.js">
+    <style>
+        body{background:#fff;display:block;}
+    </style>
+    <div ms-controller="plus">
+        <div>
+            供应商名称：{{data.name}}
+        </div>
+        <ul>
+            <li ms-repeat="product">
+                <label><input ms-value="{{el.id}}" type="checkbox" value="" ms-click="pushArr(this)" />{{el.name}} </label>
+            </li>
+        </ul>
+        <button id='sure' ms-click="f1(1)">确认</button>
+    </div>
+
+</@layout>
+

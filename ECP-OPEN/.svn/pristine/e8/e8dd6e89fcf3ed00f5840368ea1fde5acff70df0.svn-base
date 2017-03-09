@@ -1,0 +1,266 @@
+var api = frameElement.api,oper = api.data.oper,id=api.data.id,
+    custParame=SYSTEM.custParame,
+    typeList=custParame.typeList,
+    $_form=$("#base_form"),
+    addNew=false,
+    type=parent.type,
+    billType=parent.billType;
+var model = avalon.define({
+    billType:billType,fillOrder:false,
+    buyOrder:false,returnOrder:false,
+    meterialOrder:false,transfersOrder:false,
+    receiveOrder:false,saleOrder:false,
+    salereturnOrder:false,
+	$id:'ctrl',
+    parameList:typeList,
+    type:type,
+	data:{
+        sender_name: "",
+        id:"",
+        address: "",
+        agreement: "",
+        is_deleted:0,submit_status:0,order_id:'',
+        ordersn:'',type:'',bill_date:SYSTEM.date,head_id:SYSTEM.user.id,
+        head_name:SYSTEM.user.realname,depot_id:'',
+			productlistlength:1,name:'',status:"",ordertype:type,
+        start_date:"",end_date:"",sign_date:SYSTEM.date,billsn:"自动生成",delivery_date:SYSTEM.date,
+			pact:"",remark:"",audit_status:0,
+			contacts_name:"",contacts_phone:"",contacts_id:"",customer_id:"",
+        consignee_name:"", consignee_phone: "",
+        customer_name:"",rebate:0,rebate_amt:0,order_amt:0,
+			productlist:[{amount:0,remark:"",unit:"",
+                amt: 0,description: "",specifications:"",
+                pack:"",id: "",product_id: "",brand:"",spec:"",
+                billsn:"",packformat:"",product_name: "",model:"",
+                purchase_price:0,quoted_price:0,
+				sale_price:0,zhamt:0,zkl:0,tax_rate:0,tax:0}]},
+	depotList:[], totalAmount:0,
+	sumzhamt:0,sumAmount:0,sumAmt:0,sumTax:0,sumPTax:0,
+	userList:[],
+    qryHead:function(v){
+    	Public.ajaxPost(rootPath+"/sso/user/dataGrid.json",{keyword:v,status:1,_sortField:"realname",rows:9999,_sort:"asc", type: 1},function(json){
+    		model.userList=json.data.list;
+    	});
+    },
+    //添加商品
+    customerList:[],custComboV:false,
+	chooseCust:function(e){
+    	model.data.customer_id=e.id;
+    	model.data.customer_name=e.name;
+    	model.data.contacts_name=e.contacts_name;
+    	model.data.contacts_phone=e.contacts_phone;
+    	model.custComboV=false;
+    },
+    qryCustomer:function(v){//自动完成查询客户
+    	model.custComboV=true;
+    	Public.ajaxPost(rootPath+"/crm/customer/dataGrid.json",{keyword:v,_sortField:"realname",_sort:"asc",type:type>1?-1:0},function(json){
+    		model.customerList=json.data.list;  
+    	});
+    },
+    productlist:[],productComboDiv:-1,
+    qryProduct:function(v,idx){//自动完成查商品
+    	model.productComboDiv=idx;
+    	Public.ajaxPost(rootPath+(model.data.type>3?"/scm/stock/dataGrid.json":"/scm/product/dataGrid.json"),{keyword:v,_sortField:"name",_sort:"asc",depot_id:model.data.depot_id},function(json){
+    		model.productlist=json.data.list;
+    	});
+    },
+    chooseProduct:function(e,idx){
+    	model.data.productlist[idx].product_id=e.product_id;
+    	model.data.productlist[idx].product_name=e.product_name;
+    	model.data.productlist[idx].sale_price=e.sale_price;
+    	model.data.productlist[idx].sale_price=e.purchase_price;
+    	model.data.productlist[idx].purchase_price=e.purchase_price;//将采购价记录到订单中
+    	model.data.productlist[idx].unit=e.unit;
+    	model.data.productlist[idx].brand=e.brand;
+    	model.data.productlist[idx].spec=e.spec;
+    	model.data.productlist[idx].billsn=e.billsn;
+    	model.data.productlist[idx].model=e.model;
+    	model.data.productlist[idx].packformat=e.packformat;
+    	model.productComboDiv=-1;
+    },
+    addRow:function(){
+    	model.data.productlist.push({product_id:'',description:"",quoted_price:0,unit:"",purchase_price:0,zhamt:0,zkl:0,tax_rate:0,tax:0,amt:"",sale_price:"",amount:"",product_name:"",brand:"",spec:"",packformat:"",model:"",billsn:""});
+    },//增加商品行;
+    delRow:function(e){//删除商品行
+    	if(model.data.productlist.length==1){
+    		parent.parent.Public.tips({type : 1,content : "至少输入一个商品信息"});
+    		return;
+    	}
+    	e.preventDefault();
+        var item = this.$vmodel.$remove();
+    	model.data.productlist.remove(item);
+    }
+});
+model.data.$watch("type",function(a,b){
+    console.log('a');
+	console.log(a);
+	if(a==0||a==1||a==2||a==3||a==4||a==5||a==6){// 0：'采购入库' 1：'销售退货入库',   4：'销售出库',5：'采购退货出库',
+		model.fillOrder=true;
+	}else{
+		model.data.order_id="";
+		model.data.order_name="";
+		model.fillOrder=false;
+	}
+});
+model.data.$watch("type",function(a,b){
+	if(a==0){
+		model.buyOrder=true;
+	}else{
+		model.buyOrder=false;
+	}
+});
+model.data.$watch("type",function(a,b){
+	if(a==5){
+		model.returnOrder=true;
+	}else{
+		model.returnOrder=false;
+	}
+});
+model.data.$watch("type",function(a,b){
+	if(a==1){
+		model.meterialOrder=true;
+	}else{
+		model.meterialOrder=false;
+	}
+});
+model.data.$watch("type",function(a,b){
+	if(a==2){
+		model.transfersOrder=true;
+	}else{
+		model.transfersOrder=false;
+	}
+});
+model.data.$watch("type",function(a,b){
+	if(a==3){
+		model.receiveOrder=true;
+	}else{
+		model.receiveOrder=false;
+	}
+});
+model.data.$watch("type",function(a,b){
+	if(a==4){
+		model.saleOrder=true;
+	}else{
+		model.saleOrder=false;
+	}
+});
+model.data.$watch("type",function(a,b){
+	if(a==6){
+		model.salereturnOrder=true;
+	}else{
+		model.salereturnOrder=false;
+	}
+});
+var THISPAGE = {
+	init : function() {
+		model.qryHead();
+		this.initDom();
+		this.initBtn();
+	},
+	initDom : function() {
+		$(".ui-datepicker-input").datepicker();
+		Public.ajaxPost(rootPath+"/scm/depot/list.json",{}, function(json){
+			if(json.status==200){
+				model.depotList=json.data;
+			}else{
+				parent.Public.tips({type: 1, content : json.msg});
+			}
+		});
+		if(id!=undefined&&id!=''&&id!='undefined'){
+			Public.ajaxPost(rootPath+"/scm/storageBill/qryOp.json",{id:id}, function(json){
+				if(json.status==200){
+					avalon.mix(model.data,json.data);
+					if(model.data.productlistlength==undefined||model.data.productlistlength==0){
+						model.data.productlistlength=1;
+						model.data.productlist=[{amount:0,amount2:0,product_id: "",unit:"",product_name: ""}];
+					}
+					jisuan();
+					THISPAGE.initEvent();
+				}else{
+					parent.Public.tips({type: 1, content : json.msg});
+				}
+			});
+		}else{
+			THISPAGE.initEvent();
+		}
+	},
+	initBtn:function(){
+		var e = "add" ==  api.data.oper ? [ "<i class='fa fa-save mrb'></i>保存", "关闭" ] : [ "<i class='fa fa-save mrb'></i>确定", "取消" ];
+		api.button({
+			id : "confirm",
+			name : e[0],
+			focus : !0,
+			callback : function() {
+				addNew=false;
+				$_form.trigger("validate");
+				return false
+			}
+		}, {
+			id : "cancel",
+			name : e[1]
+		})
+	},
+	initEvent:function(){
+		this.initValidator();
+	},
+	initValidator:function() {
+		$_form.validator({
+			valid : function() {
+				postData();
+			},
+			ignore : ":hidden",
+			theme : "yellow_top",
+			timely : 1,
+			stopOnError : true
+		});
+	}
+};
+function jisuan(){
+	model.totalAmount=0;
+	for(var i=0;i<model.data.productlist.length;i++){
+		model.totalAmount+=new Number(model.data.productlist[i].amount);
+	}
+}
+function jisuan(v){//计算合计 注意：对于数组不能使用$watch 因为只能监听length。
+	model.sumzhamt=0;
+	model.sumAmount=0;
+	model.sumAmt=0;
+	model.sumTax=0;
+	model.sumPTax=0;
+	for(var i=0;i<model.data.productlist.length;i++){
+		var el=model.data.productlist[i];
+		model.sumzhamt=new Number(model.sumzhamt)+new Number(el.zhamt);
+		model.sumAmount=new Number(model.sumAmount)+new Number(el.amount);
+		model.sumAmt=new Number(model.sumAmt)+new Number(el.amt);
+		model.sumTax=new Number(model.sumTax)+new Number(el.tax);
+	}
+	model.sumPTax=model.sumAmt+model.sumTax;
+	if(v==0)
+		model.data.rebate_amt =(model.sumPTax*model.data.rebate/100).toFixed(2);
+	else{
+		if(model.sumPTax>0)
+		model.data.rebate=(model.data.rebate_amt/model.sumPTax*100).toFixed(3);
+	}
+	model.data.order_amt=model.sumPTax-model.data.rebate_amt;
+};
+function postData(){
+	var e = "add" == oper ? "新增出库入库" : "修改出库入库";
+	model.data.productlistlength=model.data.productlist.length;
+	model.audit_status=0;
+	Public.ajaxPost(rootPath+"/scm/storageBill/save.json",model.data.$model
+			, function(t) {
+		if (200 == t.status) {
+			parent.parent.Public.tips({
+				content : e + "成功！"
+			});
+			model.data.id=t.data.id;
+			model.data.billsn=t.data.sn;
+			parent.model.reloadData(null);
+		} else
+			parent.parent.Public.tips({
+				type : 1,
+				content : e + "失败！" + t.msg
+			});
+	});
+}
+THISPAGE.init();

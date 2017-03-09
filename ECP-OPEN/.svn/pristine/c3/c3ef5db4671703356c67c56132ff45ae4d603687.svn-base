@@ -1,0 +1,251 @@
+<#include "../../inc/layout.html">
+<@layout title="订单" js="scm/order/edit.js">
+<style>
+body{background: #fff;}
+#prodcutTable .ui-input{width:100%;}
+.comboDiv{position:absolute;left:88px;}
+.comboDiv div{height:30px;}
+.table .comboDiv{position:absolute;left:88px;}
+.table tbody tr td{padding:0px;}
+.table tbody tr td .ui-input{width:100%;height:34px;}
+.table tbody tr .tdPd{padding:8px;}
+.table .ui-input{border:none;}
+.table1 td{padding:2px;}
+.tr{text-align:right;}
+.form_title{padding:0px 20px;text-align:center;}
+.form_title img{width:80px;float:left;}
+.form_title p{font-size:20px;padding-top:10px;padding-right:40px;}
+.form_title span{float:right;}
+.tdPd{text-align:center;}
+/* .just{text-align: justify;text-align-last: justify;-moz-text-align-last: justify;overflow: hidden;height: 20px;}
+.just:after{display: inline-block;content: '';overflow: hidden;width: 100%;height: 0;}  */
+.just{float:left;}
+.ui-input{margin-right:20px;}
+.tx{text-align:center;}
+.footerWords{font-weight:bold;padding-bottom:10px;}
+.note{margin:10px 0;}
+.modelEdit{white-space:nowrap;}
+</style>
+<div class="manage-wrapper" ms-controller="ctrl">
+    <div class="manage-wrap">
+    	<!-- title -->
+    	<div class="form_title">
+    		<img src="../../assets/img/logoTal.jpg">
+    		<p><p ms-if="type==0">材料采购订单</p><p ms-if="type==2">毫米装饰材料销售出库单</p><p ms-if="type==1">毫米装饰材料退料单</p><p ms-if="type==3">毫米装饰材料销售退料单</p></p>
+    	</div>
+    	<form action=""id="base_form">
+    				<table style="width:100%;" class="table1" ms-if="type==0">
+    				<tr>
+    					<td align="left" width="130px"><span>供货方</span><font color="red">*</font>：</td>
+    					<td width="15%">
+	    					<input type="text" id="customer" class="ui-input" autocomplete="off"  ms-keyup="qryCustomer(this.value)" ms-click="qryCustomer(this.value)" ms-duplex="data.customer_name" >
+		          			<div class="comboDiv" style="width:240px;" ms-visible="custComboV">
+		          				<div ms-repeat="customerList" ms-click="chooseCust(el)">{{el.sn}}&nbsp;&nbsp;{{el.name}}</div>
+		          			</div>
+    					</td>
+    					<td align="left" width="130px">送货日期：</td>
+    					<td width="15%"><input id="date1" class="ui-input ui-datepicker-input" ms-duplex="data.delivery_date" data-rule="required;" data-msg="请选择发货日期/退货日期"></td>
+    					<td align="left" width="120px">单据编号：</td>
+    					<td width="15%">{{data.billsn}}</td>
+    				</tr>
+    				<tr>
+    					<td align="left" width="130px">联系人：</td>
+    					<td width="15%"><input ms-duplex="data.contacts_name" class="ui-input" id="" data-rule="required" data-msg="请填写联系人姓名"></td>
+    					<td align="left" width="130px"><span>采购方</span>：</td>
+    					<td width="15%"><select ms-duplex="data.head_id" class="ui-input" data-rule="required" data-msg="请选择负责人">
+    					<option ms-repeat="userList" ms-value="el.id">{{el.realname}}({{el.department_name}}-{{el.position_name}})</option>
+    				</select></td>
+    				</tr>
+    				<tr>
+    					<td align="left" width="130px">联系电话：</td>
+    					<td width="15%"><input ms-duplex="data.contacts_phone" class="ui-input" id="" data-rule="required" data-msg="请填写联系人电话"></td>
+    				<td align="left" width="150px">联系电话：</td>
+    				<td><input ms-duplex="" class="ui-input" id="" data-rule="required" data-msg="请填写联系人电话"></td>
+    				</tr>
+    				<tr>
+    					<td align="left" width="130px">收货地址：</td>
+    					<td cosplan="2"><input ms-duplex="" class="ui-input" style="width:224%;" id="" data-rule="required" data-msg="请填写地址" colspan="3"></td>
+    				</tr>
+    				</table> 
+    				 <table style="width:100%;" class="table1" ms-if="type==1">
+    				<tr>
+    					<td align="left" width="220px">合同号：</td>
+    					<td width="15%"><input ms-duplex="data.ordersn" class="ui-input" style="width:180px;" id="ordersn" data-rule="required" data-msg="请填写合同号"></td>
+    					<td  align="left" width="220px"align="right">退料日期：</td>
+    					<td width="15%"><input id="date1" class="ui-input ui-datepicker-input" style="width:180px" ms-duplex="data.delivery_date" data-rule="required;" data-msg="请选择发货日期/退货日期"></td>
+    					<td  align="left" width="220px">退料单号：</td>
+    					<td width="20%">{{data.billsn}}</td>
+    				</tr>
+    				<tr>
+    					<td  align="left" width="220px">收货联系人：</td>
+    					<td width="15%"><input ms-duplex="data.contacts_name" class="ui-input" style="width:180px;" id="" data-rule="required" data-msg="请填写联系人姓名"></td>
+    					<td align="left" width="220px">联系人电话：</td>
+    					<td width="15%"><input ms-duplex="data.contacts_phone" class="ui-input" style="width:180px;" id="" data-rule="required" data-msg="请填写联系人电话"></td>
+    					<td align="left" width="220px">负责人：</td>
+    					<td><select ms-duplex="data.head_id" class="ui-input" style="width:180px;" data-rule="required" data-msg="请选择负责人">
+    					<option ms-repeat="userList" ms-value="el.id">{{el.realname}}({{el.department_name}}-{{el.position_name}})</option>
+    				</select></td>
+    				</tr>
+    				<tr>
+    					<td  align="left" width="220px" ms-if="data.ordertype==0">收货地址：</td>
+    					<td  align="left" width="220px" ms-if="data.ordertype>0">地址：</td>
+    					<td><input ms-duplex="" class="ui-input" style="width: 180px;" id="" data-rule="required" data-msg="请填写地址" colspan="3"></td>
+    				</tr>
+    				<tr>
+    					<td align="left" width="190px" ms-if="data.ordertype==1||data.ordertype==3">原订单编号：</td>
+    					<td ms-if="data.ordertype==1||data.ordertype==3"><input ms-duplex="data.ordersn" class="ui-input" style="width:180px;" id="ordersn" data-rule="required" data-msg="请填写原订单编号"></td>
+    				</tr>
+    				</table>  
+    				
+    				 <table style="width:100%;" class="table1" ms-if="type==2">
+    				<tr>
+    					<td align="left" width="220px" >合同号：</td>
+    					<td><input ms-duplex="data.ordersn" class="ui-input" style="width:180px;" id="ordersn" data-rule="required" data-msg="请填写合同号"></td>
+    					<td align="left" width="220px" >送货日期：</td>
+    					<td width="20%"><input id="sign_date" class="ui-input ui-datepicker-input" style="width:180px;" ms-duplex="data.sign_date" data-msg="单据日期" data-rule="required;"></td>
+    					<!-- <td align="left" width="220px" >发货日期：</td>
+    					<td><input id="date1" class="ui-input ui-datepicker-input" style="width:180px" ms-duplex="data.delivery_date" data-rule="required;" data-msg="请选择发货日期/退货日期"></td> -->
+    					<td align="left" width="220px" >单据编号：</td>
+    					<td width="20%">{{data.billsn}}</td>
+    				</tr>
+    				<tr>
+    					<td align="left" width="220px"  ms-if="data.ordertype==0" style="width:150px">供货方联系人：</td>
+    					<td align="left" width="220px"  ms-if="data.ordertype>0">收货联系人：</td>
+    					<td><input ms-duplex="data.contacts_name" class="ui-input" style="width:180px;" id="" data-rule="required" data-msg="请填写联系人姓名"></td>
+    					<td align="left" width="220px" style="width:150px">联系人电话：</td>
+    					<td><input ms-duplex="data.contacts_phone" class="ui-input" style="width:180px;" id="" data-rule="required" data-msg="请填写联系人电话"></td>
+    					<td align="left" width="220px" ><span ms-if="data.ordertype>=1">负责人</span><span ms-if="data.ordertype<1">采购方</span>：</td>
+    					<td><select ms-duplex="data.head_id" class="ui-input" style="width:160px;" data-rule="required" data-msg="请选择负责人">
+    					<option ms-repeat="userList" ms-value="el.id">{{el.realname}}({{el.department_name}}-{{el.position_name}})</option>
+    				</select></td>
+    				
+    				</tr>
+    				<tr>
+    					<td align="left" width="220px"  ms-if="data.ordertype==0">收货地址：</td>
+    					<td align="left" width="220px"  ms-if="data.ordertype>0" cosplan="2">地址：</td>
+    					<td><input ms-duplex="" class="ui-input" style="width:375%;" id="" data-rule="required" data-msg="请填写地址" colspan="3"></td>
+    				</tr>
+    				<tr>
+    					<td align="left" width="220px"  ms-if="data.ordertype==1||data.ordertype==3">原订单编号：</td>
+    					<td ms-if="data.ordertype==1||data.ordertype==3"><input ms-duplex="data.ordersn" class="ui-input" style="width:160px;" id="ordersn" data-rule="required" data-msg="请填写原订单编号"></td>
+    				</tr>
+    				</table>  
+    				<table style="width:100%;" class="table1" ms-if="type==3">
+    				<tr>
+    					<td align="left" width="220px" >合同号：</td>
+    					<td><input ms-duplex="data.ordersn" class="ui-input" style="width:180px;" id="ordersn" data-rule="required" data-msg="请填写合同号"></td>
+    					<td align="left" width="220px" >退料日期：</td>
+    					<td width="20%"><input id="sign_date" class="ui-input ui-datepicker-input" style="width:180px;" ms-duplex="data.sign_date" data-msg="单据日期" data-rule="required;"></td>
+    					<!-- <td><input id="date1" class="ui-input ui-datepicker-input" style="width:100px" ms-duplex="data.delivery_date" data-rule="required;" data-msg="请选择发货日期/退货日期"></td> -->
+    					<td align="left" width="220px" >退料单号：</td>
+    					<td width="20%">{{data.billsn}}</td>
+    				</tr>
+    				<tr>
+    					<td align="left" width="220px" >收货联系人：</td>
+    					<td><input ms-duplex="data.contacts_name" class="ui-input" style="width:180px;" id="" data-rule="required" data-msg="请填写联系人姓名"></td>
+    					<td align="left" width="220px" >联系人电话：</td>
+    					<td><input ms-duplex="data.contacts_phone" class="ui-input" style="width:180px;" id="" data-rule="required" data-msg="请填写联系人电话"></td>
+    					<td align="left" width="220px" >负责人：</td>
+    					<td><select ms-duplex="data.head_id" class="ui-input" style="width:180px;" data-rule="required" data-msg="请选择负责人">
+    					<option ms-repeat="userList" ms-value="el.id">{{el.realname}}({{el.department_name}}-{{el.position_name}})</option>
+    				</select></td>
+    				</tr>
+    				<tr>
+    					<td align="left" width="220px"  ms-if="data.ordertype==0">收货地址：</td>
+    					<td align="left" width="220px"  ms-if="data.ordertype>0">地址：</td>
+    					<td><input ms-duplex="" class="ui-input" style="width:180px" id="" data-rule="required" data-msg="请填写地址" colspan="3"></td>
+    				</tr>
+    				<tr>
+    					<td align="left" width="220px"  ms-if="data.ordertype==1||data.ordertype==3">原订单编号：</td>
+    					<td ms-if="data.ordertype==1||data.ordertype==3"><input ms-duplex="data.ordersn" class="ui-input" style="width:180px;" id="ordersn" data-rule="required" data-msg="请填写原订单编号"></td>
+    				</tr>
+    				</table>  
+    		</ul>
+    		<br>
+    		<table class="table table-hover table-striped table_thead_fixed table-bordered table-condensed" id="prodcutTable">
+  				<thead>
+  					<tr>
+  						<th width="80px" class="tx">序号</th>
+  						<th width="70px">&nbsp;</th>
+  						<th width="167px" class="tx">编码</th>
+  						<th width="167px" class="tx">名称</th>
+  						<th width="167px" class="tx">品牌</th>
+  						<th width="167px" class="tx">型号</th>
+  						<th width="167px" class="tx">规格</th>
+  						<th width="70px" class="tx">单位</th>
+  						<th width="167px" ms-if="type<2" class="tx">采购价</th>
+  						<th width="167px" ms-if="type>1" class="tx">销售价</th>
+  						<th width="167px" ms-if="type==4" class="tx">报价</th>
+  						<!-- <th width="120px">折扣率(%)</th>
+  						<th width="167px">折扣金额</th> -->
+  						<th width="167px" class="tx">数量</th>
+  						<th width="167px" class="tx">金额</th>	
+  						<th width="167px" class="tx">包装规格</th> 
+  						<!--<th width="90px">税率(%)</th>
+  						<th width="167px">税额</th>
+  						<th width="167px">价税合计</th>-->
+  						<th width="167px" class="tx">备注</th>
+  					</tr>
+  				</thead>
+  				<tbody style="max-height:400px;">
+  					<tr ms-repeat="data.productlist">
+  						<td class="tdPd tx">{{$index+1}}</td>
+  						<td class="tdPd tx"><nobr><i class="fa fa-plus mrb" ms-click="addRow" title="移除"></i><i class="fa fa-trash mrb" ms-click="delRow" title="移除"></i></nobr></td>
+  						<td class="tdPd tx" align="left">{{el.billsn}}</td>
+  						<td class="tx">
+	          			<input type="text"class="ui-input tx" ms-attr-id="ix{{$index}}" autocomplete="off" ms-keyup="qryProduct(this.value,$index)"ms-click="qryProduct(this.value,$index)"
+	          			 ms-duplex="el.product_name" data-rule="required;" data-msg="请选择商品">
+	          			<div class="comboDiv" style="width:260px;" ms-visible="productComboDiv==$index">
+	          				<div ms-repeat="productlist" ms-click="chooseProduct(el,productComboDiv)">{{el.billsn}}	&nbsp;&nbsp;{{el.product_name}}</div>
+	          			</div></td>
+	          			<td class="tdPd tx" align="left">{{el.brand}}</td>
+	          			<td class="tdPd modelEdit" align="left">{{el.model}}</td>
+	          			<td class="tdPd" align="left">{{el.spec}}</td>
+	          			<td class="tdPd">{{el.unit|custParame}}</td>
+  						<td class="tdPd" align="left">{{el.sale_price|money}}</td><#-- 此价格当为销售时为销售价格则为采购价格 -->	
+  						<td ms-if="type==4" class="tx"><input class="ui-input" ms-attr-id="id_{{$index}}"data-rule="required;money" ms-duplex="el.quoted_price" ms-change="jisuan"></td><#-- 报价 -->
+  						<!-- <td><input class="ui-input" ms-attr-id="id1{{$index}}"data-rule="required;number" ms-duplex="el.zkl" ms-change="jisuan"></td>
+  						<td><input class="ui-input tr" ms-attr-id="id2{{$index}}"data-rule="required;number" ms-duplex="el.zhamt" ms-change="jisuan" ms-value="{{fixedNum(el.zkl*(type==4?el.quoted_price:el.sale_price)/100)}}"></td> -->
+  						<td class="tx"><input class="ui-input tx" ms-attr-id="id3{{$index}}"data-rule="required;number" ms-duplex="el.amount" ms-change="jisuan"></td>
+  						<td class="tx"><input class="ui-input tx" ms-attr-id="id4{{$index}}"data-rule="required;money" ms-duplex="el.amt" ms-change="jisuan" ms-value="{{fixedNum(((type==4?el.quoted_price:el.sale_price)-el.zhamt)*el.amount)}}"></td>
+  						<!--  <td><input class="ui-input tr" ms-attr-id="id5{{$index}}"data-rule="required;number" ms-duplex="el.tax_rate" ms-change="jisuan"></td>
+  						<td><input class="ui-input tr" ms-attr-id="id6{{$index}}"data-rule="required;number" ms-duplex="el.tax" ms-change="jisuan" ms-value="{{fixedNum(el.amt*el.tax_rate/100)}}"></td>
+  						<td class="tdPd" align="right">{{fixedNum((el.amt*(1+el.tax_rate/100)))}}</td>-->
+  						<td class="tdPd" align="left">{{el.packformat}}</td> 	
+  						<td class="tx"><input class="ui-input" ms-attr-id="id8{{$index}}"maxlength="30" ms-duplex="el.description"></td>
+  					</tr>
+  				</tbody>
+  				<tfoot>
+  					<tr>
+  						<td ms-attr-colspan="(type==4?7:6)" align="center"><b>合计：</b></td>
+  						<!-- <td align="right">{{fixedNum(sumzhamt)|money}}</td>
+  						<td align="right">{{(sumAmount)}}</td> -->
+  						<td align="center" colspan="8">{{fixedNum(sumAmt)|money}}</td>
+						<!--  <td></td>
+  						<td align="right">{{fixedNum(sumTax)|money}}</td>
+  						<td align="right">{{fixedNum(sumPTax)|money}}</td>-->
+  					</tr>
+  				</tfoot>
+    		</table>
+    		<div id="amountArea">
+          <p class="footerWords">
+            	<!-- 折扣率:&nbsp;&nbsp;<input type="text" data-rule="number"class="ui-input tr"style="width:50px;" ms-change="jisuan(0)"ms-duplex="data.rebate">%&nbsp;&nbsp;
+            	折扣额:&nbsp;&nbsp;<input type="text"  data-rule="money"class="ui-input tr"style="width:200px;" ms-change="jisuan(1)"ms-duplex="data.rebate_amt">元&nbsp;&nbsp; -->
+            	订单金额:&nbsp;&nbsp;{{fixedNum(data.order_amt)|money}}元(大写：{{fixedNum(data.order_amt)|atoc}})<input type="hidden" ms-duplex="data.order_amt" ms-value="{{sumPTax-data.rebate_amt}}">
+           </p>
+           <p>
+			<span>备注：</span>
+           <br>
+           <input ms-duplex="data.remark" id="remark" class="ui-input note" style="width:100%;">
+           </p>
+           
+           <!--<p ms-if="data.ordertype==0||data.ordertype==2||data.ordertype==4">
+			 合同条款：
+           <br>
+           <textarea id="editor" ms-duplex="data.pact" style="height:200px;width:100%;"></textarea>
+           </p>-->
+       </div>
+    	</form>
+    </div>
+</div>
+</@layout>
